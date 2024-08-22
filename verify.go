@@ -1,8 +1,8 @@
 package verifystruct
 
 import (
-	"errors"
 	"fmt"
+	"log"
 	"reflect"
 	"strings"
 
@@ -14,49 +14,39 @@ import (
 // - listFieldMap: a map that tracks the existence of fields in the standardModel (for fast lookup).
 // - listMessError: a slice of error messages accumulated during validation.
 type verify struct {
-	verifyRequirementMap map[string]map[string]string
-	listFieldMap         map[string]bool
-	listMessError        []string
-}
-
-// returnErrorMessage consolidates all error messages into a single string and logs them.
-// If there are errors, it logs the concatenated error message string and returns an error.
-func (v *verify) returnErrorMessage() error {
-	if len(v.listMessError) > 0 {
-		var message string
-		for _, err_mess := range v.listMessError {
-			if len(message) > 0 {
-				// Concatenate all error messages into one string, separated by "; ".
-				message += "; "
-			}
-			message += err_mess
-		}
-		//log.Println(message)
-		//return nil // Return an error here if needed (currently returning nil).
-		return errors.New(message)
-	}
-	// Return nil if there are no errors.
-	return nil
+	verifyModelMap   map[string]map[string]string
+	StandardFieldMap map[string]bool
+	// listMessError    []error
 }
 
 // VerifyStruct validates the fields in request_dict against the standardModel.
 // It returns an error if any field in request_dict is invalid or if any other validation fails.
-func VerifyStruct(request_dict map[string]any, standardModel any) error {
+func VerifyStruct(request_dict map[string]any, standardModel any) []error {
+	listErr := []error{} // Initialize the list of error messages.
 	// Parse the standardModel to extract validation rules and field names.
 	verifier, err_parseVerify := parseVerify(standardModel)
 	if err_parseVerify != nil {
-		return err_parseVerify
+		listErr = append(listErr, err_parseVerify)
+		return listErr
 	}
-	verifier.listMessError = []string{} // Initialize the list of error messages.
 
 	// Check for fields in request_dict that do not exist in the standardModel.
-	if err_fieldInvalid := utils.CheckFieldNotExistInStandardModel(request_dict, verifier.listFieldMap); err_fieldInvalid != nil {
-		verifier.listMessError = append(verifier.listMessError, err_fieldInvalid...)
+	if err_fieldInvalid := utils.CheckFieldNotExistInStandardModel(request_dict, verifier.StandardFieldMap); err_fieldInvalid != nil {
+		listErr = append(listErr, err_fieldInvalid...)
 	}
 
-	// other validation func
+	// Check for fields in request_dict that exist as required by standardModel
+	if err_Requirefield := utils.CheckRequirementField(request_dict, verifier.verifyModelMap); err_Requirefield != nil {
+		listErr = append(listErr, err_Requirefield...)
+	}
 
-	return verifier.returnErrorMessage() // Return any accumulated error messages.
+	// log.Println(request_dict, listErr)
+	logValidationDetails(request_dict, listErr)
+	// ... other validation func
+	if len(listErr) == 0 {
+		return nil
+	}
+	return listErr
 }
 
 // parseVerify reflects on the standardModel to extract field names and their associated
@@ -68,17 +58,17 @@ func parseVerify(standardModel any) (*verify, error) {
 		return nil, fmt.Errorf("expected a struct, but got %s", t.Kind())
 	}
 	checkField := verify{
-		verifyRequirementMap: make(map[string]map[string]string),
-		listFieldMap:         make(map[string]bool),
+		verifyModelMap:   make(map[string]map[string]string),
+		StandardFieldMap: make(map[string]bool),
+		// listMessError:    []error{},
 	}
 
 	for i := 0; i < t.NumField(); i++ {
 		field := t.Field(i)
 		fieldName := strings.ToLower(field.Name)
 		FieldCheckStr := field.Tag.Get("verify")
-		checkField.verifyRequirementMap[fieldName] = parseProperties(FieldCheckStr)
-		checkField.listFieldMap[fieldName] = true
-
+		checkField.verifyModelMap[fieldName] = parseProperties(FieldCheckStr)
+		checkField.StandardFieldMap[fieldName] = true
 	}
 	return &checkField, nil
 }
@@ -94,4 +84,24 @@ func parseProperties(tagVerify string) map[string]string {
 		}
 	}
 	return result
+}
+
+// LogValidationDetails logs the details of the validation process, displaying the request data and the list of errors clearly.
+func logValidationDetails(requestDict map[string]any, listErr []error) {
+	// Convert requestDict to a readable format
+	var requestDetails []string
+	for key, value := range requestDict {
+		requestDetails = append(requestDetails, fmt.Sprintf("\n\t - %s:%v ", key, value))
+	}
+	requestDetailsStr := strings.Join(requestDetails, "")
+
+	// Convert listErr to a readable format
+	var errorDetails []string
+	for _, err := range listErr {
+		errorDetails = append(errorDetails, fmt.Sprintf("\n\t - %v ", err.Error()))
+	}
+	errorDetailsStr := strings.Join(errorDetails, "")
+
+	// Log the details
+	log.Printf(" --- Validation Details:\n + Request Data: %s\n + Errors: %s \n", requestDetailsStr, errorDetailsStr)
 }
