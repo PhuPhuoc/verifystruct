@@ -1,0 +1,3 @@
+ go test -v ./utils/tests
+
+ go test -v ./utils/tests -run __test method__

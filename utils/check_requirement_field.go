@@ -2,6 +2,7 @@ package utils
 
 import (
 	"fmt"
+	"reflect"
 )
 
 func CheckRequirementField(request_dict map[string]any, verifyReqMap map[string]map[string]string) []error {
@@ -13,10 +14,26 @@ func CheckRequirementField(request_dict map[string]any, verifyReqMap map[string]
 			continue
 		}
 		if tagRequiredVal == "true" {
-			if _, fieldExist := request_dict[field]; !fieldExist {
+			fieldValue, fieldExist := request_dict[field]
+			if !fieldExist {
 				list_err = append(list_err, fmt.Errorf("field '%v' is required", field))
+			} else {
+				if isEmpty(fieldValue) {
+					list_err = append(list_err, fmt.Errorf("field '%v' is required and cannot be empty", field))
+				}
 			}
 		}
 	}
 	return list_err
+}
+
+func isEmpty(value any) bool {
+	v := reflect.ValueOf(value)
+	switch v.Kind() {
+	case reflect.String, reflect.Slice, reflect.Array, reflect.Map, reflect.Chan:
+		return v.Len() == 0
+	case reflect.Ptr, reflect.Interface:
+		return v.IsNil()
+	}
+	return false
 }

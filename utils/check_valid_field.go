@@ -15,5 +15,8 @@ func CheckFieldNotExistInStandardModel(request_dict map[string]any, StandardFiel
 			list_err = append(list_err, fmt.Errorf("field '%v' is invalid", key))
 		}
 	}
+	if len(list_err) == 0 {
+		return nil
+	}
 	return list_err
 }
