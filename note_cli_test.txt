@@ -1,3 +1,7 @@
- go test -v ./utils/tests
-
+1/ cmd for function test in folder utils
  go test -v ./utils/tests -run __test method__
+
+2/ cmd for package's tests
+go test -v -run TestVerifyStruct
+or
+go test

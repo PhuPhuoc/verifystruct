@@ -28,17 +28,20 @@ func VerifyStruct(request_dict map[string]any, standardModel any) []error {
 		return listErr
 	}
 
-	// Check for fields in request_dict that do not exist in the standardModel.
+	// check fields of request_dict that do not exist in standardmodel
 	if err_fieldInvalid := utils.CheckFieldNotExistInStandardModel(request_dict, verifier.StandardFieldMap); err_fieldInvalid != nil {
 		listErr = append(listErr, err_fieldInvalid...)
 	}
 
-	// Check for fields in request_dict that exist as required by standardModel
+	// Check fields of request_dict that are not allowed to be nil(null) as required by standardmodel
 	if err_Requirefield := utils.CheckRequirementField(request_dict, verifier.verifyModelMap); err_Requirefield != nil {
 		listErr = append(listErr, err_Requirefield...)
 	}
 
-	// ... other validation func
+	// Check for field values ​​in request_dict that do not match the specified type of the corresponding fields in standardmodel
+	if err_InvalidFieldValue := utils.CheckValidType(request_dict, verifier.verifyModelMap); err_InvalidFieldValue != nil {
+		listErr = append(listErr, err_InvalidFieldValue...)
+	}
 
 	if len(listErr) == 0 {
 		return nil
@@ -61,7 +64,10 @@ func parseVerify(standardModel any) (*verify, error) {
 
 	for i := 0; i < t.NumField(); i++ {
 		field := t.Field(i)
-		// fieldName := strings.ToLower(field.Name)
+		// Check if field has pointer data type
+		if field.Type.Kind() == reflect.Ptr {
+			return nil, fmt.Errorf("field '%s' (tag:'%s') must not have pointer type", field.Name, field.Tag.Get("json"))
+		}
 		fieldName := field.Tag.Get("json")
 		FieldCheckStr := field.Tag.Get("verify")
 		checkField.verifyModelMap[fieldName] = parseProperties(FieldCheckStr)

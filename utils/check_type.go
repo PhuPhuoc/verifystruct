@@ -2,6 +2,8 @@ package utils
 
 import (
 	"fmt"
+	"regexp"
+	"strconv"
 	"strings"
 
 	"github.com/PhuPhuoc/verifystruct/validate"
@@ -15,7 +17,20 @@ func CheckValidType(request_dict map[string]any, verifyReqMap map[string]map[str
 		if !typeExist {
 			continue
 		}
-		if errValidType := compareTypeVerifyTagWithReqField(targetType, curfield, curValue); errValidType != nil {
+		var minStr, maxStr *string
+		tagMinVal, tagMinExist := mapTarget["min"]
+		tagMaxVal, tagMaxExist := mapTarget["max"]
+		if tagMinExist {
+			minStr = &tagMinVal
+		} else {
+			minStr = nil
+		}
+		if tagMaxExist {
+			maxStr = &tagMaxVal
+		} else {
+			maxStr = nil
+		}
+		if errValidType := compareTypeVerifyTagWithReqField(targetType, curfield, curValue, minStr, maxStr); errValidType != nil {
 			list_err = append(list_err, errValidType)
 		}
 	}
@@ -23,17 +38,33 @@ func CheckValidType(request_dict map[string]any, verifyReqMap map[string]map[str
 }
 
 // type: string, bool, number, date, time, mail, enum
-func compareTypeVerifyTagWithReqField(targetType, curfield string, currentVal any) error {
+func compareTypeVerifyTagWithReqField(targetType, curfield string, currentVal any, minStr, maxStr *string) error {
 	switch targetType {
 	case "string":
-		fmt.Println("string")
-		if _, ok := currentVal.(string); !ok {
-			return fmt.Errorf("%s must be formatted as a string", curfield)
+		min, max := convertToInt(minStr, maxStr)
+		if ok := validate.IsString(currentVal, min, max); !ok {
+			if min != nil && max != nil {
+				return fmt.Errorf("%s must be a string type and have a string length of %d - %d characters", curfield, *min, *max)
+			} else if min != nil {
+				return fmt.Errorf("%s must be a string type and have a minimum string length of %d characters", curfield, *min)
+			} else if max != nil {
+				return fmt.Errorf("%s must be a string type and have a maximum string length of %d characters", curfield, *max)
+			} else {
+				return fmt.Errorf("%s must be a string type", curfield)
+			}
 		}
 	case "number":
-		fmt.Println("number")
-		if ok := validate.IsNumber(currentVal); !ok {
-			return fmt.Errorf("%s must be formatted as a number", curfield)
+		min, max := convertToInt(minStr, maxStr)
+		if ok := validate.IsNumber(currentVal, min, max); !ok {
+			if min != nil && max != nil {
+				return fmt.Errorf("%s must be a numeric type and have a value from %d to %d", curfield, *min, *max)
+			} else if min != nil {
+				return fmt.Errorf("%s must be a numeric type and have a minimum value of %d", curfield, *min)
+			} else if max != nil {
+				return fmt.Errorf("%s must be a numeric type and have a maximum value of %d", curfield, *max)
+			} else {
+				return fmt.Errorf("%s must be a numeric type", curfield)
+			}
 		}
 	case "bool":
 		if _, ok := currentVal.(bool); !ok {
@@ -61,7 +92,10 @@ func compareTypeVerifyTagWithReqField(targetType, curfield string, currentVal an
 		if strings.Contains(targetType, "enum") {
 			if str, ok := currentVal.(string); ok {
 				if flag := validate.IsValidEnum(str, targetType); !flag {
-					return fmt.Errorf("%s must be a string belonging to %s", curfield, validate.ExtractEnum(targetType))
+					messErr := validate.ExtractEnum(targetType)
+					re := regexp.MustCompile(`-`)
+					messErr = re.ReplaceAllString(messErr, " or ")
+					return fmt.Errorf("%s must be a string belonging to %s", curfield, messErr)
 				}
 			}
 		} else {
@@ -69,4 +103,21 @@ func compareTypeVerifyTagWithReqField(targetType, curfield string, currentVal an
 		}
 	}
 	return nil
+}
+
+func convertToInt(s1, s2 *string) (*int, *int) {
+	var i1, i2 *int
+
+	if s1 != nil {
+		if val, err := strconv.Atoi(*s1); err == nil {
+			i1 = &val
+		}
+	}
+
+	if s2 != nil {
+		if val, err := strconv.Atoi(*s2); err == nil {
+			i2 = &val
+		}
+	}
+	return i1, i2
 }

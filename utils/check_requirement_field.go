@@ -16,10 +16,10 @@ func CheckRequirementField(request_dict map[string]any, verifyReqMap map[string]
 		if tagRequiredVal == "true" {
 			fieldValue, fieldExist := request_dict[field]
 			if !fieldExist {
-				list_err = append(list_err, fmt.Errorf("field '%v' is required", field))
+				list_err = append(list_err, fmt.Errorf("%v is required but missing", field))
 			} else {
 				if isEmpty(fieldValue) {
-					list_err = append(list_err, fmt.Errorf("field '%v' is required and cannot be empty", field))
+					list_err = append(list_err, fmt.Errorf("%v is required and cannot be empty", field))
 				}
 			}
 		}

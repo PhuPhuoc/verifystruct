@@ -28,67 +28,47 @@ var tc_checkValidType = []testCase_CheckType{
 			"field7": "active",
 		},
 		verifyReqMap: map[string]map[string]string{
-			"field1": {
-				"type": "string",
-			},
-			"field2": {
-				"type": "number",
-			},
-			"field3": {
-				"type": "bool",
-			},
-			"field4": {
-				"type": "date",
-			},
-			"field5": {
-				"type": "time",
-			},
-			"field6": {
-				"type": "email",
-			},
-			"field7": {
-				"type": "enum[active,inactive]",
-			},
+			"field1": {"type": "string", "min": "3", "max": "10"},
+			"field2": {"type": "number", "min": "10", "max": "100"},
+			"field3": {"type": "bool"},
+			"field4": {"type": "date"},
+			"field5": {"type": "time"},
+			"field6": {"type": "email"},
+			"field7": {"type": "enum[active-inactive]"},
 		},
 		expectedErrors: []error{},
 	},
 	{
 		name: "Invalid string field",
 		requestDict: map[string]any{
-			"field1": 123, // Invalid: expected a string
+			"field1": 123,
 		},
 		verifyReqMap: map[string]map[string]string{
-			"field1": {
-				"type": "string",
-			},
+			"field1": {"type": "string", "min": "3", "max": "10"},
 		},
 		expectedErrors: []error{
-			fmt.Errorf("field1 must be formatted as a string"),
+			fmt.Errorf("field1 must be a string type and have a string length of 3 - 10 characters"),
 		},
 	},
 	{
 		name: "Invalid number field",
 		requestDict: map[string]any{
-			"field2": "not_a_number", // Invalid: expected a number
+			"field2": "not_a_number",
 		},
 		verifyReqMap: map[string]map[string]string{
-			"field2": {
-				"type": "number",
-			},
+			"field2": {"type": "number", "min": "10", "max": "100"},
 		},
 		expectedErrors: []error{
-			fmt.Errorf("field2 must be formatted as a number"),
+			fmt.Errorf("field2 must be a numeric type and have a value from 10 to 100"),
 		},
 	},
 	{
 		name: "Invalid bool field",
 		requestDict: map[string]any{
-			"field3": "not_a_bool", // Invalid: expected a boolean
+			"field3": "not_a_bool",
 		},
 		verifyReqMap: map[string]map[string]string{
-			"field3": {
-				"type": "bool",
-			},
+			"field3": {"type": "bool"},
 		},
 		expectedErrors: []error{
 			fmt.Errorf("field3 must be formatted as a boolean"),
@@ -97,12 +77,10 @@ var tc_checkValidType = []testCase_CheckType{
 	{
 		name: "Invalid date field",
 		requestDict: map[string]any{
-			"field4": "23-08-2024", // Invalid: expected format YYYY-MM-DD
+			"field4": "23-08-2024",
 		},
 		verifyReqMap: map[string]map[string]string{
-			"field4": {
-				"type": "date",
-			},
+			"field4": {"type": "date"},
 		},
 		expectedErrors: []error{
 			fmt.Errorf("field4 must be formatted as a date (YYYY-MM-DD)"),
@@ -111,12 +89,10 @@ var tc_checkValidType = []testCase_CheckType{
 	{
 		name: "Invalid time field",
 		requestDict: map[string]any{
-			"field5": "3:30 PM", // Invalid: expected format HH:MM
+			"field5": "3:30 PM",
 		},
 		verifyReqMap: map[string]map[string]string{
-			"field5": {
-				"type": "time",
-			},
+			"field5": {"type": "time"},
 		},
 		expectedErrors: []error{
 			fmt.Errorf("field5 must be formatted as a time (HH:MM)"),
@@ -125,12 +101,10 @@ var tc_checkValidType = []testCase_CheckType{
 	{
 		name: "Invalid email field",
 		requestDict: map[string]any{
-			"field6": "example.com", // Invalid: missing @domain
+			"field6": "example.com",
 		},
 		verifyReqMap: map[string]map[string]string{
-			"field6": {
-				"type": "email",
-			},
+			"field6": {"type": "email"},
 		},
 		expectedErrors: []error{
 			fmt.Errorf("field6 must be formatted as an email (___@gmail.com)"),
@@ -139,26 +113,22 @@ var tc_checkValidType = []testCase_CheckType{
 	{
 		name: "Invalid enum field",
 		requestDict: map[string]any{
-			"field7": "pending", // Invalid: not in enum[active,inactive]
+			"field7": "pending",
 		},
 		verifyReqMap: map[string]map[string]string{
-			"field7": {
-				"type": "enum[active,inactive]",
-			},
+			"field7": {"type": "enum[active-inactive]"},
 		},
 		expectedErrors: []error{
-			fmt.Errorf("field7 must be a string belonging to active,inactive"),
+			fmt.Errorf("field7 must be a string belonging to active or inactive"),
 		},
 	},
 	{
 		name: "Unsupported type",
 		requestDict: map[string]any{
-			"field8": "some_value", // Unsupported type
+			"field8": "some_value",
 		},
 		verifyReqMap: map[string]map[string]string{
-			"field8": {
-				"type": "unsupported_type",
-			},
+			"field8": {"type": "unsupported_type"},
 		},
 		expectedErrors: []error{
 			fmt.Errorf("unsupported data type: unsupported_type"),

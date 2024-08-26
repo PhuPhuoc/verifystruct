@@ -50,7 +50,7 @@ var tc_CheckRequirementField = []testCase_CheckRequirementField{
 			},
 		},
 		expectedErrors: []error{
-			fmt.Errorf("field 'field2' is required"),
+			fmt.Errorf("field2 is required but missing"),
 		},
 	},
 	{
@@ -84,8 +84,8 @@ var tc_CheckRequirementField = []testCase_CheckRequirementField{
 			},
 		},
 		expectedErrors: []error{
-			fmt.Errorf("field 'field1' is required"),
-			fmt.Errorf("field 'field2' is required and cannot be empty"),
+			fmt.Errorf("field1 is required but missing"),
+			fmt.Errorf("field2 is required and cannot be empty"),
 		},
 	},
 	{
@@ -100,7 +100,7 @@ var tc_CheckRequirementField = []testCase_CheckRequirementField{
 			},
 		},
 		expectedErrors: []error{
-			fmt.Errorf("field 'field1' is required and cannot be empty"),
+			fmt.Errorf("field1 is required and cannot be empty"),
 		},
 	},
 }

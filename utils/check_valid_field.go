@@ -12,7 +12,7 @@ func CheckFieldNotExistInStandardModel(request_dict map[string]any, StandardFiel
 	list_err := []error{}
 	for key := range request_dict {
 		if !StandardFieldMap[strings.ToLower(key)] {
-			list_err = append(list_err, fmt.Errorf("field '%v' is invalid", key))
+			list_err = append(list_err, fmt.Errorf("%v is invalid field", key))
 		}
 	}
 	if len(list_err) == 0 {

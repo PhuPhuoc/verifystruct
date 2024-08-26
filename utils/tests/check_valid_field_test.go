@@ -39,7 +39,7 @@ var testCases = []testCase_ValidField{
 			"field1": true,
 			"field2": true,
 		},
-		expectedErrors: []error{fmt.Errorf("field 'field3' is invalid")},
+		expectedErrors: []error{fmt.Errorf("field3 is invalid field")},
 	},
 	{
 		name: "Multiple invalid fields",
@@ -53,7 +53,7 @@ var testCases = []testCase_ValidField{
 			"field1": true,
 			"field2": true,
 		},
-		expectedErrors: []error{fmt.Errorf("field 'field3' is invalid"), fmt.Errorf("field 'Field4' is invalid")},
+		expectedErrors: []error{fmt.Errorf("field3 is invalid field"), fmt.Errorf("Field4 is invalid field")},
 	},
 	{
 		name: "Case insensitive check",
